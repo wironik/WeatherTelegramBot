@@ -3,7 +3,6 @@ const {Telegraf} = require('telegraf')
 const {Markup} = require('telegraf')
 var {keyBot} = require('./keys.js')
 
-
 //создание кнопок
 function getMainMenu()
 {
@@ -15,10 +14,10 @@ function getMainMenu()
         ['Жаба']
     ])
 }
+
 //создание бота
 const bot = new Telegraf(keyBot)
 console.log('bot created')
-
 
 //СПИСОК ФУНКЦИЙ С АПИШКОЙ
 function getWeatherNow()
@@ -27,8 +26,6 @@ function getWeatherNow()
 	//var fetch = require('node-fetch');
 	return someText
 }
-
-
 
 //задаем команды боту
 bot.start((ctx) => ctx.reply(`Добро пожаловать, ${ctx.message.from.first_name}`,getMainMenu())) //ответ бота на команду /start
@@ -39,15 +36,11 @@ bot.hears('Жаба', ctx => {ctx.replyWithPhoto('https://memepedia.ru/wp-conten
 bot.command('WeatherNow', async ctx=> {
 	var someText=await getWeatherNow()
 	ctx.reply(`Текущая погода: ${someText}`)
-	
 	})
 
 
 //обработка остального
 bot.on('text', ctx => {ctx.replyWithHTML('нет такой команды')}) //реакция на все остальные введеные сообщения
-
-
-
 
 
 //запуск бота
