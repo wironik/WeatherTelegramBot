@@ -61,8 +61,7 @@ function translateUrl(uri)
 	return encoded;
 }
 
-function ss()
-{
-}
+
+
 
 
