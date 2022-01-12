@@ -77,7 +77,7 @@ bot.action('6', ctx => {
 
 //обработка остального
 bot.on('text', ctx => {ctx.replyWithHTML('нет такой команды')}) //реакция на все остальные введеные сообщения
-bot.on('sticker', (ctx) => ctx.reply('👍'))
+bot.on('sticker', (ctx) => ctx.replyWithPhoto('https://wdesk.ru/_ph/226/2/201922412.png'))
 
 //запуск бота
 bot.launch()
