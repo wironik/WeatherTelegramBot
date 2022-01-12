@@ -1,4 +1,8 @@
 'use strict';
+var keys =
+{
+	keyWeather2:"bb8168d3a4b4fde874d2805aaa94b144"
+}
 
 var options =
 {
@@ -16,8 +20,7 @@ var options =
 function test()
 {
 	var url = `http://api.openweathermap.org/data/2.5/weather?q=${options.city}&lang=${options.lang}&units={options.units}&appid=${keys.keyWeather2}`;
-	var url2= `http://example.com/api/users`;
-	fetch(url2)
+	fetch(url)
 	//.then(response=>
 	//{
 		//console.log(response.json());
