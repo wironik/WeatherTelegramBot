@@ -5,11 +5,12 @@ var {keyBot, statusText, helpText} = require('./keys.js')
 //наш ботик с методами
 class myBot
 {
-	constructor(key)
+	constructor(key,stat)
 	{
 		const {Telegraf} = require('telegraf')
 		
 		this.bot=new Telegraf(key);
+		this.statScene=stat;
 		console.log("class bot object created")
 	}
 	//обьект бота
@@ -17,11 +18,12 @@ class myBot
 	//куча миллион методов для него
 	getMainMenu()
 	{
+		//,Markup.button.callback('Погода сейчас', 'weathernow')
 		const {Markup} = require('telegraf')
 		return Markup.keyboard([
 		[Markup.button.callback('Обновить данные', 'start'),Markup.button.callback('Проверка связи', 'ping')],
 		[Markup.button.callback('Время сейчас', 'time'),Markup.button.callback('Жабки!', 'dudes')],
-		[Markup.button.callback('Бросить кубик', 'cube'),Markup.button.callback('Погода сейчас', 'weathernow')],
+		[Markup.button.callback('Бросить кубик', 'cube')],
 		[Markup.button.callback('Узнать, как поживает бот', 'statusbot')]
 		])
 		
@@ -45,75 +47,135 @@ class myBot
 		ctx.reply(`Вы выбрали цифру: ${num}`)
 		ctx.replyWithDice()
 		console.log(ctx.from.first_name+" бросил кубик")
-		
+		this.statScene[ctx.from.id]={action:'ready'}
+		console.log("bot status "+ctx.from.id+": "+this.statScene[ctx.from.id].action)
 	}
 	//команда - старт
 	startBot(ctx)
 	{
+		this.statScene[ctx.message.from.id]={action:'start'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		ctx.reply(`Добро пожаловать, ${ctx.message.from.first_name}, напишите /help`, this.getMainMenu())
 		console.log(ctx.message.from.first_name+" запустил бота")
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//команда - погода сейчас
+	
 	weatherNowBot(ctx)
 	{
 		ctx.reply("Введите Ваш город: ")
-		console.log(ctx.message.from.first_name+" запросил данные о погоде")
-		var someText=weather.getCurrent(ctx.message.from.data)
-		//var fetch = require('node-fetch');
-		ctx.reply(`Текущая погода: Ваш город - ${someText}`)
-		console.log(ctx.message.from.first_name+" узнал погоду")
-		return someText
-		
+		//status:weather
+		this.statScene[ctx.message.from.id]={action:'weather'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		//перехватываем запрос - мы должны ввести ответ и отправить строку
 	}
 	//команда - помощь
 	helpBot(ctx)
 	{
+		this.statScene[ctx.message.from.id]={action:'help'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		ctx.reply(helpText)
 		console.log(ctx.message.from.first_name+" получил информацию")
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//команда - пинг
 	pingBot(ctx)
 	{
+		this.statScene[ctx.message.from.id]={action:'ping'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		ctx.reply('pong')
 		console.log(ctx.message.from.first_name+" передал пакет")
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//команда - время
 	timeBot(ctx)
 	{
+		this.statScene[ctx.message.from.id]={action:'time'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		ctx.reply(String(new Date()))
 		console.log(ctx.message.from.first_name+" узнал время")
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//команда - жаба
 	dudesBot(ctx)
 	{
+		this.statScene[ctx.message.from.id]={action:'dudes'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		ctx.replyWithPhoto('https://memepedia.ru/wp-content/uploads/2018/07/cover1.jpg',
 		{
 			caption: 'It is wednesday, my dudes'
 		})
 		console.log(ctx.message.from.first_name+" получил картинку с жабой")
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//команда - кубик
 	cubeBot(ctx)
 	{
 		ctx.reply("Выберите цифру, чтобы бросить кубик: ",this.getCubeMenu())
+		this.statScene[ctx.message.from.id]={action:'cube'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//команда - состояние бота
 	statusBot(ctx)
 	{
+		this.statScene[ctx.message.from.id]={action:'state'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		ctx.reply(statusText)
 		console.log(ctx.message.from.first_name+" получил сообщение от разработчика")
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//команда - ответ на любой иной текст
 	someTextBot(ctx)
 	{
-		ctx.reply('нет такой команды, напишите /help, там рабочие команды!')
-		console.log(ctx.message.from.first_name+" ввел неверную команду")
+		if (!this.statScene[ctx.message.from.id])
+		{
+			this.statScene[ctx.message.from.id]={action:'ready'}
+			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		}
+		
+		//проблема: данные возвращаются позже, чем это все (использовать асинк и эвейт, хз где и как)
+		switch (this.statScene[ctx.message.from.id].action)
+		{
+			case ('weather'):
+				console.log(ctx.message.from.first_name+" запросил данные о погоде")
+				var someText=weather.getCurrent(ctx.message.text)
+				console.log(someText)
+				if (someText==undefined)
+				{
+					ctx.reply('Город не найден')
+					console.log(ctx.message.from.first_name+" не получил информацию")
+				}
+				else
+				{
+					ctx.reply(`${someText}`)
+					console.log(ctx.message.from.first_name+" узнал погоду")
+				}
+					
+				//вызываем метод//
+				this.statScene[ctx.message.from.id]={action:'ready'}
+				console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+				break;
+			default:
+				ctx.reply('нет такой команды, напишите /help, там рабочие команды!')
+				console.log(ctx.message.from.first_name+" ввел неверную команду")
+				//на остальное говорит, что команды не существует
+		}
 	}
 	//команда - ответ на любой стикер
 	someStickerBot(ctx)
 	{
+		this.statScene[ctx.message.from.id]={action:'sticker'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		ctx.replyWithPhoto('https://wdesk.ru/_ph/226/2/201922412.png')
 		console.log(ctx.message.from.first_name+" отправил стикер")
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	
 	//привязка кнопок к методам
@@ -213,6 +275,9 @@ class myBot
 		this.bot.on('text', ctx => 
 		{
 			this.someTextBot(ctx)
+			
+			
+			
 		}) //реакция на все остальные введеные сообщения
 		this.bot.on('sticker', (ctx) => 
 		{
@@ -242,14 +307,62 @@ class Weather
 	}
 	getCurrent(city)
 	{
-		//this.url='';
-		var someText=city
-		console.log(`Данные: ${someText}`)
-		return someText
+		var {keyWeather, lang, units} = require('./testee.js')
+		this.url=encodeURI(`http://api.openweathermap.org/data/2.5/weather?q=${city}&lang=${lang}&units=metric&appid=${keyWeather}`)
+
+		//let res = this.requestData(this.url);
+		//console.log(res);
+		
+		let someText=undefined
+		
+		let request = require('request');
+		request(this.url, function (err, res, body) 
+		{
+			if(err)
+			{
+				console.log('error:', err);
+				return someText
+			} 
+			if (res.cod!="404")
+			{
+				let data = JSON.parse(body);
+				//console.log(data)
+				someText = `Погода в городе - ${data.name}:
+				-Температура: ${data.main.temp}C, ${data.weather[0].description};
+				-Скорость ветра: ${data.wind.speed} м/с;
+				-Влажность: ${data.main.humidity}%;
+				-Давление: ${data.main.pressure} мм`
+				console.log("Данные: ",someText)
+				return someText
+			}
+			else
+			{
+				console.log('Данные не найдены: ', res)
+				return someText
+			}
+		});
+		
+		//return someText
+		//var someText=city+"\nПогода: хорошая)))"
+		
 	}
-	getTomorrow()
+	requestData(url)
 	{
-		//this.url='';
+		let request = require('request');
+		return new Promise(function (resolve, reject) 
+		{
+			request(url, function (error, res, body) 
+			{
+				if (!error && res.statusCode == 200) 
+				{
+					resolve(body);
+				} 
+				else 
+				{
+					reject(error);
+				}
+			});
+		});
 	}
 	getAnotherDay()
 	{
@@ -288,8 +401,10 @@ class Weather
 //}
 
 //создание бота
-const bot = new myBot(keyBot)
+let stateScene = {}
+const bot = new myBot(keyBot,stateScene)
 const weather = new Weather('yourUrl')
+
 console.log('bot created')
 
 
