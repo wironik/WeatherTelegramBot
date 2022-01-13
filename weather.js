@@ -6,7 +6,7 @@ class Weather
 	}
 	getCurrent(city)
 	{
-		var {keyWeather, lang, units} = require('./testee.js')
+		var {keyWeather, lang} = require('./keys.js')
 		let request = require('request');
 		
 		return new Promise(function (resolve, reject) 
