@@ -1,9 +1,11 @@
 class Weather
 {
+	//объект класса погоды, содержит в себе ровно ничего
 	constructor()
 	{
 		console.log("class weather object created")
 	}
+	//обращение к серверу за информацией о погоде
 	getCurrent(city)
 	{
 		var {keyWeather, lang} = require('./keys.js')
@@ -14,9 +16,8 @@ class Weather
 			{
 				if (!error && res.statusCode == 200) 
 				{
-					//resolve(body);
+					//парсим информацию, передаем текст и координаты
 					let data = JSON.parse(body);
-					//console.log(data)
 					let parseText = `Погода в городе - ${data.name}, ${data.sys.country}:
 					-Температура: ${data.main.temp}C, ${data.weather[0].description};
 					-Скорость ветра: ${data.wind.speed} м/с;
@@ -27,17 +28,20 @@ class Weather
 				} 
 				else if (!error && res.statusCode==404)
 				{
+					//в случае, если город не найден
 					console.log('Данные не найдены')
 					resolve("not found")
 				}
 				else 
 				{
+					//в случае, если проблемы на стороне сервера или url некорректный
 					console.log('Ошибка')
 					reject(error);
 				}
 			});
 		});
 	}
+	//(нигде не используется) пример структуры с промисом
 	requestData(url)
 	{
 		let request = require('request');
@@ -56,30 +60,5 @@ class Weather
 			});
 		});
 	}
-	getPicture(x,y)
-	{
-		//this.url='https://openweathermap.org/weathermap?basemap=map&cities=true&layer=temperature&lat=59.5350&lon=30.5241&zoom=10';
-		//`https://tile.openweathermap.org/map/${layer}/${z}/${x}/${y}.png?appid=${keyWeather}`
-		var {keyWeather} = require('./keys.js')
-		
-		let request = require('request');
-		return new Promise(function (resolve, reject) 
-		{
-			request(`https://tile.openweathermap.org/map/temp_new/10/${x}/${y}.png?appid=${keyWeather}`, function (error, res, body) 
-			{
-				if (!error && res.statusCode == 200) 
-				{
-					resolve(body);
-				} 
-				else 
-				{
-					reject(error);
-				}
-			});
-		});
-		
-		
-	}
-
 }
 module.exports=Weather

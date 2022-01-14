@@ -6,7 +6,11 @@ const myBot = require('./myBot.js')
 let stateScene = {}
 let bot = new myBot(keyBot,stateScene)
 
-
 //запуск бота
 bot.initialize()
 console.log("succsess")
+
+//пожелания:
+//сделать котиков (аналогично жабам)
+//поиск картинки 
+//захостить бота, чтобы работал в любое время

@@ -1,6 +1,6 @@
 class myBot
 {
-	//конструктор - содержит в себе обьект погоды, сцену, ключ, а также обьект телеграф
+	//конструктор - содержит в себе обьект погоды, сцену, ключ, а также обьект телеграф бота
 	constructor(key,stat)
 	{
 		const {Telegraf} = require('telegraf')
@@ -9,26 +9,7 @@ class myBot
 		this.bot=new Telegraf(key);
 		this.weather=new Weather();
 		this.statScene=stat;
-		///перечисления, нужные для кода, который добавляет команды через цикл
-		//this.hears=
-		//{
-		//	'Обновить данные':this.startBot,
-		//	'Проверка связи':this.pingBot,
-		//	'Жабки!':this.dudesBot,
-		//	'Погода сейчас':this.weatherNowBot,
-		//	'Бросить кубик':this.cubeBot,
-		//	'Время сейчас':this.timeBot,
-		//	'Узнать, как поживает бот':this.statusBot
-		//}
-		//this.commands=
-		//{
-		//	'ping':this.pingBot,
-		//	'dudes':this.dudesBot,
-		//	'weathernow':this.weatherNowBot,
-		//	'cube':this.cubeBot,
-		//	'time':this.timeBot,
-		//	'botstatus':this.statusBot
-		//}
+
 		console.log("class bot object created")
 	}
 	//куча миллион методов для него
@@ -55,38 +36,19 @@ class myBot
 		}
 		return Markup.inlineKeyboard(buttons).resize()
 	}
-	//игра - кубик
+	//метод присваивания состояния бота
 	setAction(func, action, ctx, someText)
 	{
 		this.statScene[ctx.message.from.id]={action:action}
 		console.log(`bot status ${ctx.message.from.id}: ${this.statScene[ctx.message.from.id].action}`)
-		//func();
 		console.log(ctx.message.from.first_name + someText)
 		this.statScene[ctx.message.from.id]={action:'ready'}
 		console.log(`bot status ${ctx.message.from.id}: ${this.statScene[ctx.message.from.id].action}`)
-	}
-	
-	cubeGame(ctx, num)
-	{
-		ctx.deleteMessage()
-		ctx.reply(`Вы выбрали цифру: ${num}`)
-		ctx.replyWithDice()
-		console.log(ctx.from.first_name+" бросил кубик")
-		this.statScene[ctx.from.id]={action:'ready'}
-		console.log("bot status "+ctx.from.id+": "+this.statScene[ctx.from.id].action)
 	}
 	//команда - старт
 	startBot(ctx)
 	{
 		this.setAction(ctx.reply(`Добро пожаловать, ${ctx.message.from.first_name}, напишите /help`, this.getMainMenu()), 'start', ctx, ' запустил бота')
-	}
-	//команда - погода сейчас
-	weatherNowBot(ctx)
-	{
-		ctx.reply("Введите Ваш город: ")
-		this.statScene[ctx.message.from.id]={action:'weather'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		//перехватываем запрос - мы должны ввести ответ и отправить строку
 	}
 	//команда - помощь
 	helpBot(ctx)
@@ -108,8 +70,8 @@ class myBot
 	getDudesPic()
 	{
 		let {urlDudes} = require('./keys.js')
-		let rand = Math.round(1+ Math.random() * (urlDudes.length + 1 - 2) )
-		console.log(rand, urlDudes[rand])
+		let rand = Math.round(Math.random() * urlDudes.length-1)
+		console.log(rand)
 		return urlDudes[rand]
 	}
 	//команда - жаба
@@ -120,10 +82,20 @@ class myBot
 			caption: 'держи'
 		}), 'dudes', ctx, ' получил картинку с жабой')
 	}
+	//игра кубик - после выбора цифры
+	cubeGame(ctx, num)
+	{
+		ctx.deleteMessage()
+		ctx.reply(`Вы загадали цифру: ${num}`)
+		ctx.replyWithDice()
+		console.log(ctx.from.first_name+" бросил кубик")
+		this.statScene[ctx.from.id]={action:'ready'}
+		console.log("bot status "+ctx.from.id+": "+this.statScene[ctx.from.id].action)
+	}
 	//команда - кубик
 	cubeBot(ctx)
 	{
-		ctx.reply("Выберите цифру, чтобы бросить кубик: ",this.getCubeMenu())
+		ctx.reply("Загадайте цифру, чтобы бросить кубик: ",this.getCubeMenu())
 		this.statScene[ctx.message.from.id]={action:'cube'}
 		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
@@ -133,42 +105,55 @@ class myBot
 		var {statusText} = require('./keys.js')
 		this.setAction(ctx.reply(statusText), 'state', ctx, ' получил сообщение от разработчика')
 	}
-	//команда - ответ на любой иной текст
+	//команда - погода сейчас
+	weatherNowBot(ctx)
+	{
+		const {Markup} = require('telegraf')
+		ctx.reply("Введите Ваш город: ", Markup.keyboard([Markup.button.callback('Москва', 'moscow'),Markup.button.callback('Санкт-Петербург', 'spb')]).resize())
+		this.statScene[ctx.message.from.id]={action:'weather'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		//перехватываем запрос - мы должны ввести ответ и отправить строку
+	}
+	//команда - ответ на любой иной текст, а также обработка события выбора города погоды
 	someTextBot(ctx)
 	{
+		//если состояния никакого нет в целом
 		if (!this.statScene[ctx.message.from.id])
 		{
 			this.statScene[ctx.message.from.id]={action:'ready'}
 			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		}
+		//проверка сцен
 		switch (this.statScene[ctx.message.from.id].action)
 		{
+			//сцена погоды
 			case ('weather'):
 				console.log(ctx.message.from.first_name+" запросил данные о погоде")
 				let query=this.weather.getCurrent(ctx.message.text).then(
 				res=>{
 				if (res.someText=='not found')
 				{
-					ctx.reply('Город не найден')
+					ctx.reply('Город не найден', this.getMainMenu())
 					console.log(ctx.message.from.first_name+" не получил информацию")
 				}
 				else
 				{
 					var {keyWeather} = require('./keys.js')
-					ctx.reply(res.someText)
+					ctx.reply(res.someText, this.getMainMenu())
 					ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${res.lon},${res.lat}&size=600,450&z=11&l=map&amp&name=1.png`)
 					console.log(ctx.message.from.first_name+" узнал погоду")
 				}},
 				rej=>{
 					console.log(rej)
-					ctx.reply('Ошибка: не удалось получить данные')
+					ctx.reply('Ошибка: не удалось получить данные', this.getMainMenu())
 					console.log('Не получилось найти URL')
 				})
 				this.statScene[ctx.message.from.id]={action:'ready'}
 				console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 				break;
+			//любая другая сцена
 			default:
-				ctx.reply('нет такой команды, напишите /help, там рабочие команды!')
+				ctx.reply('нет такой команды, напишите /help, там рабочие команды!', this.getMainMenu())
 				console.log(ctx.message.from.first_name+" ввел неверную команду")
 				//на остальное говорит, что команды не существует
 		}
@@ -276,7 +261,7 @@ class myBot
 			this.weatherNowBot(ctx)
 		})//ответ бота на команду /weathernow
 		
-		//должно быть в конце!!!!
+		///должно быть в конце, иначе бот команды не увидит и будет на них реагировать как на простой текст
 		this.bot.on('text', ctx => 
 		{
 			this.someTextBot(ctx)
