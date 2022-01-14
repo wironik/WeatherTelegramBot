@@ -8,7 +8,6 @@ class Weather
 	{
 		var {keyWeather, lang} = require('./keys.js')
 		let request = require('request');
-		
 		return new Promise(function (resolve, reject) 
 		{
 			request(encodeURI(`http://api.openweathermap.org/data/2.5/weather?q=${city}&lang=${lang}&units=metric&appid=${keyWeather}`), function (error, res, body) 
@@ -18,7 +17,7 @@ class Weather
 					//resolve(body);
 					let data = JSON.parse(body);
 					//console.log(data)
-					let parseText = `Погода в городе - ${data.name}:
+					let parseText = `Погода в городе - ${data.name}, ${data.sys.country}:
 					-Температура: ${data.main.temp}C, ${data.weather[0].description};
 					-Скорость ветра: ${data.wind.speed} м/с;
 					-Влажность: ${data.main.humidity}%;

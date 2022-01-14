@@ -9,9 +9,28 @@ class myBot
 		this.bot=new Telegraf(key);
 		this.weather=new Weather();
 		this.statScene=stat;
+		///перечисления, нужные для кода, который добавляет команды через цикл
+		//this.hears=
+		//{
+		//	'Обновить данные':this.startBot,
+		//	'Проверка связи':this.pingBot,
+		//	'Жабки!':this.dudesBot,
+		//	'Погода сейчас':this.weatherNowBot,
+		//	'Бросить кубик':this.cubeBot,
+		//	'Время сейчас':this.timeBot,
+		//	'Узнать, как поживает бот':this.statusBot
+		//}
+		//this.commands=
+		//{
+		//	'ping':this.pingBot,
+		//	'dudes':this.dudesBot,
+		//	'weathernow':this.weatherNowBot,
+		//	'cube':this.cubeBot,
+		//	'time':this.timeBot,
+		//	'botstatus':this.statusBot
+		//}
 		console.log("class bot object created")
 	}
-
 	//куча миллион методов для него
 	getMainMenu()
 	{
@@ -23,23 +42,30 @@ class myBot
 		[Markup.button.callback('Бросить кубик', 'cube'),Markup.button.callback('Погода сейчас', 'weathernow')],
 		[Markup.button.callback('Узнать, как поживает бот', 'statusbot')]
 		])
-		
 	}
 	//кнопки для команды "кубик"
 	getCubeMenu()
 	{
 		const {Markup} = require('telegraf')
-		
-		return Markup.inlineKeyboard([
-			Markup.button.callback('1', '1'),
-			Markup.button.callback('2', '2'),
-			Markup.button.callback('3', '3'),
-			Markup.button.callback('4', '4'),
-			Markup.button.callback('5', '5'),
-			Markup.button.callback('6', '6')])
-		.resize()
+		let buttons=[]
+		for (var i=1;i<7;i++)
+		{
+			let ir=i
+			buttons.push(Markup.button.callback(ir+'', ir+''))
+		}
+		return Markup.inlineKeyboard(buttons).resize()
 	}
 	//игра - кубик
+	setAction(func, action, ctx, someText)
+	{
+		this.statScene[ctx.message.from.id]={action:action}
+		console.log(`bot status ${ctx.message.from.id}: ${this.statScene[ctx.message.from.id].action}`)
+		//func();
+		console.log(ctx.message.from.first_name + someText)
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log(`bot status ${ctx.message.from.id}: ${this.statScene[ctx.message.from.id].action}`)
+	}
+	
 	cubeGame(ctx, num)
 	{
 		ctx.deleteMessage()
@@ -52,19 +78,12 @@ class myBot
 	//команда - старт
 	startBot(ctx)
 	{
-		this.statScene[ctx.message.from.id]={action:'start'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		ctx.reply(`Добро пожаловать, ${ctx.message.from.first_name}, напишите /help`, this.getMainMenu())
-		console.log(ctx.message.from.first_name+" запустил бота")
-		this.statScene[ctx.message.from.id]={action:'ready'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		this.setAction(ctx.reply(`Добро пожаловать, ${ctx.message.from.first_name}, напишите /help`, this.getMainMenu()), 'start', ctx, ' запустил бота')
 	}
 	//команда - погода сейчас
-	
 	weatherNowBot(ctx)
 	{
 		ctx.reply("Введите Ваш город: ")
-		//status:weather
 		this.statScene[ctx.message.from.id]={action:'weather'}
 		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		//перехватываем запрос - мы должны ввести ответ и отправить строку
@@ -72,46 +91,26 @@ class myBot
 	//команда - помощь
 	helpBot(ctx)
 	{
-		var {helpText} = require('./keys.js')
-		this.statScene[ctx.message.from.id]={action:'help'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		ctx.reply(helpText)
-		console.log(ctx.message.from.first_name+" получил информацию")
-		this.statScene[ctx.message.from.id]={action:'ready'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		var {helpText} = require('./keys.js');
+		this.setAction(ctx.reply(helpText), 'help', ctx, ' получил информацию')
 	}
 	//команда - пинг
 	pingBot(ctx)
 	{
-		this.statScene[ctx.message.from.id]={action:'ping'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		ctx.reply('pong')
-		console.log(ctx.message.from.first_name+" передал пакет")
-		this.statScene[ctx.message.from.id]={action:'ready'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		this.setAction(ctx.reply('pong'), 'ping', ctx, ' передал пакет')
 	}
 	//команда - время
 	timeBot(ctx)
 	{
-		this.statScene[ctx.message.from.id]={action:'time'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		ctx.reply(String(new Date()))
-		console.log(ctx.message.from.first_name+" узнал время")
-		this.statScene[ctx.message.from.id]={action:'ready'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		this.setAction(ctx.reply(String(new Date())), 'time', ctx, ' узнал время')
 	}
 	//команда - жаба
 	dudesBot(ctx)
 	{
-		this.statScene[ctx.message.from.id]={action:'dudes'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		ctx.replyWithPhoto('https://memepedia.ru/wp-content/uploads/2018/07/cover1.jpg',
+		this.setAction(ctx.replyWithPhoto('https://memepedia.ru/wp-content/uploads/2018/07/cover1.jpg',
 		{
 			caption: 'It is wednesday, my dudes'
-		})
-		console.log(ctx.message.from.first_name+" получил картинку с жабой")
-		this.statScene[ctx.message.from.id]={action:'ready'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		}), 'dudes', ctx, ' получил картинку с жабой')
 	}
 	//команда - кубик
 	cubeBot(ctx)
@@ -124,12 +123,7 @@ class myBot
 	statusBot(ctx)
 	{
 		var {statusText} = require('./keys.js')
-		this.statScene[ctx.message.from.id]={action:'state'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		ctx.reply(statusText)
-		console.log(ctx.message.from.first_name+" получил сообщение от разработчика")
-		this.statScene[ctx.message.from.id]={action:'ready'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		this.setAction(ctx.reply(statusText), 'state', ctx, ' получил сообщение от разработчика')
 	}
 	//команда - ответ на любой иной текст
 	someTextBot(ctx)
@@ -172,46 +166,34 @@ class myBot
 	//команда - ответ на любой стикер
 	someStickerBot(ctx)
 	{
-		this.statScene[ctx.message.from.id]={action:'sticker'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
-		ctx.replyWithPhoto('https://wdesk.ru/_ph/226/2/201922412.png')
-		console.log(ctx.message.from.first_name+" отправил стикер")
-		this.statScene[ctx.message.from.id]={action:'ready'}
-		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		this.setAction(ctx.replyWithPhoto('https://wdesk.ru/_ph/226/2/201922412.png'), 'sticker', ctx, ' отправил стикер')
 	}
-	
 	//привязка кнопок к методам
 	addActionsBot()
 	{
-		this.bot.action('1', ctx => 
+		//функции для кнопок игры в куб
+		for (var i=1;i<7;i++)
 		{
-			this.cubeGame(ctx, 1)
-		})
-		this.bot.action('2', ctx => 
-		{
-			this.cubeGame(ctx, 2)
-		})
-		this.bot.action('3', ctx => 
-		{
-			this.cubeGame(ctx, 3)
-		})
-		this.bot.action('4', ctx => 
-		{
-			this.cubeGame(ctx, 4)
-		})
-		this.bot.action('5', ctx => 
-		{
-			this.cubeGame(ctx, 5)
-		})
-		this.bot.action('6', ctx => 
-		{
-			this.cubeGame(ctx, 6)
-		})
+			let ir=i
+			this.bot.action(ir+'', ctx => 
+			{
+				this.cubeGame(ctx, ir)
+			})
+		}
+		//функции для кнопок главного меню
+		//for (var elem in this.hears)
+		//{
+		//	let tt=elem
+		//	this.bot.hears(tt, ctx =>this.hears[tt](ctx))
+		//}
+		///не сработало, если боту писать /команду, то работает, если текстом отправлять - выдает ошибки 
+		///(например, говорит что функция по созданию кнопок не является функцией, не может присвоить action, тк undefined, хотя там все есть
+		///!упд: теперь пишет, что setAction, вызываемый внутри функции из перечисления, не является таковой
 		
+		//для кнопок главного меню
 		this.bot.hears('Обновить данные', ctx => 
 		{
 			this.startBot(ctx)
-			console.log('restart')
 		})
 		this.bot.hears('Проверка связи', ctx => 
 		{
@@ -246,14 +228,19 @@ class myBot
 			this.startBot(ctx)
 		}) //ответ бота на команду /start
 		
-		this.bot.command('weathernow', ctx=> 
-		{
-			this.weatherNowBot(ctx)
-		})//ответ бота на команду /weathernow
 		this.bot.help((ctx) => 
 		{
 			this.helpBot(ctx)
 		}) //ответ бота на команду /help
+
+		//for (var elem in this.commands)
+		//{
+		//	let tt=elem
+		//	this.bot.command('/'+tt, ctx =>this.commands[tt](ctx))
+		//	console.log(tt,this.commands[tt])
+		//}
+		///тоже не сработало, пишет, что setAction, вызываемый внутри функции из перечисления, не является таковой
+		
 		this.bot.command('ping', (ctx) => 
 		{
 			this.pingBot(ctx)
@@ -274,17 +261,21 @@ class myBot
 		{
 			this.cubeBot(ctx)
 		})
+		this.bot.command('weathernow', ctx=> 
+		{
+			this.weatherNowBot(ctx)
+		})//ответ бота на команду /weathernow
+		
+		//должно быть в конце!!!!
 		this.bot.on('text', ctx => 
 		{
 			this.someTextBot(ctx)
-			
-			
-			
 		}) //реакция на все остальные введеные сообщения
 		this.bot.on('sticker', (ctx) => 
 		{
 			this.someStickerBot(ctx)
 		})
+		
 		console.log("commands added")
 	}
 	
