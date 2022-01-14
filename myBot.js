@@ -147,14 +147,16 @@ class myBot
 				console.log(ctx.message.from.first_name+" запросил данные о погоде")
 				let query=this.weather.getCurrent(ctx.message.text).then(
 				res=>{
-				if (res=='not found')
+				if (res.someText=='not found')
 				{
 					ctx.reply('Город не найден')
 					console.log(ctx.message.from.first_name+" не получил информацию")
 				}
 				else
 				{
-					ctx.reply(res)
+					var {keyWeather} = require('./keys.js')
+					ctx.reply(res.someText)
+					ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${res.lon},${res.lat}&size=600,450&z=11&l=map&amp&name=1.png`)
 					console.log(ctx.message.from.first_name+" узнал погоду")
 				}},
 				rej=>{
