@@ -18,7 +18,6 @@ class Weather
 					let data = JSON.parse(body);
 					//console.log(data)
 					let parseText = `Погода в городе - ${data.name}, ${data.sys.country}:
-					-Координаты: широта - ${data.coord.lat}, долгота - ${data.coord.lon};
 					-Температура: ${data.main.temp}C, ${data.weather[0].description};
 					-Скорость ветра: ${data.wind.speed} м/с;
 					-Влажность: ${data.main.humidity}%;
