@@ -44,21 +44,28 @@
 
 1. скачиваем файлы из ветки /dev
 2. скачиваем Node.js, если отсутствует и вводим команды: -mpm i telegraf --save и --npm i request --save
-3. создаем файл keys.js, где будет лежать ключ к боту, ключ API с сайта openweathermap.com, текст к команде /help, текст к команде /statusbot, массив с ссылками на изображения. 
+3. создаем файл keys.js, где будет лежать ключ к боту, ключ API с сайта openweathermap.org, текст к команде /help, текст к команде /statusbot, массив с ссылками на изображения. 
 
 Пример: 
 
 Файл keys.js:
 
+
 let urlList=
+
 [
+
 	'https://memepedia.ru/wp-content/uploads/2018/07/cover1.jpg', //wednesday
 	'https://mem-baza.ru/_ph/1/2/394159957.jpg?1600929151', //держижабль
+	
 ]
+
 module.exports =
+
 {
-	keyWeather:"Ключ API с сайта openweathermap.com",
-	keyBot:"Ключ API телеграм бота",
+
+	keyWeather:'Ключ API с сайта openweathermap.org',
+	keyBot:'Ключ API телеграм бота',
 	
 	helpText:'Помощь: \nЕсли бот не отвечает, значит у него технические шоколадки!\n\n'
 	+'1. /start - запуск бота/обновление данных\n2. /ping - проверка связи\n'
