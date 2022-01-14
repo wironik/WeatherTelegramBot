@@ -8,11 +8,11 @@ class Weather
 	//обращение к серверу за информацией о погоде
 	getCurrent(city)
 	{
-		var {keyWeather, lang} = require('./keys.js')
+		var {keyWeather} = require('./keys.js')
 		let request = require('request');
 		return new Promise(function (resolve, reject) 
 		{
-			request(encodeURI(`http://api.openweathermap.org/data/2.5/weather?q=${city}&lang=${lang}&units=metric&appid=${keyWeather}`), function (error, res, body) 
+			request(encodeURI(`http://api.openweathermap.org/data/2.5/weather?q=${city}&lang=ru&units=metric&appid=${keyWeather}`), function (error, res, body) 
 			{
 				if (!error && res.statusCode == 200) 
 				{
