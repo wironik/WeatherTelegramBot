@@ -22,7 +22,7 @@ class myBot
 		[Markup.button.callback('Время сейчас', 'time'),Markup.button.callback('Жабки!', 'dudes')],
 		[Markup.button.callback('Бросить кубик', 'cube'),Markup.button.callback('Погода сейчас', 'weathernow')],
 		[Markup.button.callback('Узнать, как поживает бот', 'statusbot')]
-		])
+		]).oneTime()
 	}
 	//кнопки для команды "кубик"
 	getCubeMenu()

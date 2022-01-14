@@ -30,7 +30,7 @@ class Weather
 				{
 					//в случае, если город не найден
 					console.log('Данные не найдены')
-					resolve("not found")
+					resolve({someText:'not found', lat:0, lon:0})
 				}
 				else 
 				{
