@@ -104,12 +104,19 @@ class myBot
 	{
 		this.setAction(ctx.reply(String(new Date())), 'time', ctx, ' узнал время')
 	}
-	//команда - жаба
-	dudesBot(ctx)
+	//получить рандом ссылку на картинку
+	getDudesPic()
 	{
-		this.setAction(ctx.replyWithPhoto('https://memepedia.ru/wp-content/uploads/2018/07/cover1.jpg',
+		let {urlDudes} = require('./keys.js')
+		let rand = Math.round(1+ Math.random() * (urlDudes.length + 1 - 1) )
+		return urlDudes[rand]
+	}
+	//команда - жаба
+	dudesBot(ctx, url)
+	{
+		this.setAction(ctx.replyWithPhoto(this.getDudesPic(),
 		{
-			caption: 'It is wednesday, my dudes'
+			caption: 'держи'
 		}), 'dudes', ctx, ' получил картинку с жабой')
 	}
 	//команда - кубик
