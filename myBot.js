@@ -108,7 +108,8 @@ class myBot
 	getDudesPic()
 	{
 		let {urlDudes} = require('./keys.js')
-		let rand = Math.round(1+ Math.random() * (urlDudes.length + 1 - 1) )
+		let rand = Math.round(1+ Math.random() * (urlDudes.length + 1 - 2) )
+		console.log(rand, urlDudes[rand])
 		return urlDudes[rand]
 	}
 	//команда - жаба

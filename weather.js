@@ -56,13 +56,10 @@ class Weather
 			});
 		});
 	}
-	getAnotherDay()
-	{
-		//this.url='';
-	}
 	getPicture()
 	{
-		//this.url=''
+		//this.url='https://openweathermap.org/weathermap?basemap=map&cities=false&layer=pressure&lat=59.5350&lon=30.5241&zoom=10';
+		//'https://tile.openweathermap.org/map/{layer}/{z}/{x}/{y}.png?appid={API key}'
 	}
 
 }
