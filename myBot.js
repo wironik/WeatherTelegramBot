@@ -114,6 +114,91 @@ class myBot
 		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		//перехватываем запрос - мы должны ввести ответ и отправить строку
 	}
+	//получение списка найденных городов
+	getCurrentWeatherInfo(ctx)
+	{
+		var {keyWeather} = require('./keys.js')
+		let url=encodeURI(`http://api.openweathermap.org/data/2.5/find?q=${ctx.message.text}&lang=ru&units=metric&appid=${keyWeather}`)
+		
+		console.log(ctx.message.from.first_name+" запросил данные о погоде")
+		this.weather.requestData(url).then(
+		res=>{
+		if (res=='not found')
+		{
+			ctx.reply('Город не найден', this.getMainMenu())
+			console.log(ctx.message.from.first_name+" не получил информацию")
+			this.statScene[ctx.message.from.id]={action:'ready'}
+			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		}
+		else
+		{
+			//получаем погоду
+			const {Markup} = require('telegraf')
+			
+			let buttons=[]
+			for (var id=0; id<res.count;id++)
+			{
+				buttons.push(Markup.button.callback(`${id+1}: ${res.list[id].name}, ${res.list[id].sys.country}`, 'weather '+id))
+			}
+			buttons.push(Markup.button.callback('Вернуться назад', 'cancel'))
+			ctx.reply('Выберите город из списка ниже: ', Markup.keyboard(buttons).resize())
+			
+			this.weather.info=res
+			
+			console.log(ctx.message.from.first_name+" получил список городов")
+			
+			this.statScene[ctx.message.from.id]={action:'selectWeather'}
+			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		}},
+		rej=>{
+			console.log(rej)
+			ctx.reply('Ошибка: не удалось получить данные', this.getMainMenu())
+			console.log('Не получилось найти URL')
+			this.statScene[ctx.message.from.id]={action:'ready'}
+			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		})
+	}
+	//отображение сообщения после выбора города
+	printCurrentWeather(ctx)
+	{
+		switch(ctx.message.text)
+		{
+			case 'Вернуться назад':
+				ctx.reply('Вы вернулись в главное меню', this.getMainMenu())
+				this.statScene[ctx.message.from.id]={action:'ready'}
+				console.log(ctx.message.from.first_name+" вернулся в главное меню")
+				console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)	
+				break;
+			default:
+				let id=0
+				for (var i=0;i<this.weather.info.count;i++)
+				{
+					if (ctx.message.text==`${i+1}: ${this.weather.info.list[i].name}, ${this.weather.info.list[i].sys.country}`)
+					{
+						id=i
+						break;
+					}
+					else
+						id=null
+				}
+				if (id!=null)
+				{
+					let info=this.weather.getInformation(this.weather.info)
+					ctx.reply(info.someText[id])
+					ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${this.weather.info.list[id].coord.lon},${this.weather.info.list[id].coord.lat}&size=600,450&z=11&l=map&amp&name=1.png`)
+					console.log(ctx.message.from.first_name+" выбрал город")
+					break;
+				}
+				else
+				{
+					ctx.reply('Такого города нет в списке. Выберите город из списка ниже:')
+					console.log(ctx.message.from.first_name+" ввел неверное название города из списка")
+					break;
+				}
+				break;
+		}
+	}
+	
 	//команда - ответ на любой иной текст, а также обработка события выбора города погоды
 	someTextBot(ctx)
 	{
@@ -128,28 +213,11 @@ class myBot
 		{
 			//сцена погоды
 			case ('weather'):
-				console.log(ctx.message.from.first_name+" запросил данные о погоде")
-				let query=this.weather.getCurrent(ctx.message.text).then(
-				res=>{
-				if (res.someText=='not found')
-				{
-					ctx.reply('Город не найден', this.getMainMenu())
-					console.log(ctx.message.from.first_name+" не получил информацию")
-				}
-				else
-				{
-					var {keyWeather} = require('./keys.js')
-					ctx.reply(res.someText, this.getMainMenu())
-					ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${res.lon},${res.lat}&size=600,450&z=11&l=map&amp&name=1.png`)
-					console.log(ctx.message.from.first_name+" узнал погоду")
-				}},
-				rej=>{
-					console.log(rej)
-					ctx.reply('Ошибка: не удалось получить данные', this.getMainMenu())
-					console.log('Не получилось найти URL')
-				})
-				this.statScene[ctx.message.from.id]={action:'ready'}
-				console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+				this.getCurrentWeatherInfo(ctx)
+				break;
+			//сцена выбора города из списка
+			case ('selectWeather'):
+				this.printCurrentWeather(ctx)
 				break;
 			//любая другая сцена
 			default:
@@ -175,15 +243,6 @@ class myBot
 				this.cubeGame(ctx, ir)
 			})
 		}
-		//функции для кнопок главного меню
-		//for (var elem in this.hears)
-		//{
-		//	let tt=elem
-		//	this.bot.hears(tt, ctx =>this.hears[tt](ctx))
-		//}
-		///не сработало, если боту писать /команду, то работает, если текстом отправлять - выдает ошибки 
-		///(например, говорит что функция по созданию кнопок не является функцией, не может присвоить action, тк undefined, хотя там все есть
-		///!упд: теперь пишет, что setAction, вызываемый внутри функции из перечисления, не является таковой
 		
 		//для кнопок главного меню
 		this.bot.hears('Обновить данные', ctx => 
@@ -228,14 +287,6 @@ class myBot
 			this.helpBot(ctx)
 		}) //ответ бота на команду /help
 
-		//for (var elem in this.commands)
-		//{
-		//	let tt=elem
-		//	this.bot.command('/'+tt, ctx =>this.commands[tt](ctx))
-		//	console.log(tt,this.commands[tt])
-		//}
-		///тоже не сработало, пишет, что setAction, вызываемый внутри функции из перечисления, не является таковой
-		
 		this.bot.command('ping', (ctx) => 
 		{
 			this.pingBot(ctx)
