@@ -20,7 +20,7 @@ class myBot
 		return Markup.keyboard([
 		[Markup.button.callback('Обновить данные', 'start'),Markup.button.callback('Проверка связи', 'ping')],
 		[Markup.button.callback('Время сейчас', 'time'),Markup.button.callback('Жабки!', 'dudes')],
-		[Markup.button.callback('Бросить кубик', 'cube'),Markup.button.callback('Погода сейчас', 'weathernow')],
+		[Markup.button.callback('Бросить кубик', 'cube'),Markup.button.callback('Узнать погоду', 'weathernow')],
 		[Markup.button.callback('Узнать, как поживает бот', 'statusbot')]
 		]).oneTime()
 	}
@@ -70,7 +70,7 @@ class myBot
 	getDudesPic()
 	{
 		let {urlDudes} = require('./keys.js')
-		let rand = Math.round(Math.random() * urlDudes.length-1)
+		let rand = Math.round(0.5+Math.random() * urlDudes.length-1)
 		console.log(rand)
 		return urlDudes[rand]
 	}
@@ -109,10 +109,18 @@ class myBot
 	weatherNowBot(ctx)
 	{
 		const {Markup} = require('telegraf')
-		ctx.reply("Введите Ваш город: ", Markup.keyboard([Markup.button.callback('Москва', 'moscow'),Markup.button.callback('Санкт-Петербург', 'spb')]).resize())
+		ctx.reply("Введите Ваш город: ", Markup.keyboard([Markup.button.callback('Москва', 'moscow'),Markup.button.callback('Санкт-Петербург', 'spb'),Markup.button.callback('Вернуться в главное меню', 'cancelMenu')]).resize())
 		this.statScene[ctx.message.from.id]={action:'weather'}
 		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		//перехватываем запрос - мы должны ввести ответ и отправить строку
+	}
+	//вернуться в главное меню
+	cancelWeather(ctx)
+	{
+		ctx.reply('Вы вернулись в главное меню', this.getMainMenu())
+		this.statScene[ctx.message.from.id]={action:'ready'}
+		console.log(ctx.message.from.first_name+" вернулся в главное меню")
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)	
 	}
 	//получение списка найденных городов
 	getCurrentWeatherInfo(ctx)
@@ -144,7 +152,7 @@ class myBot
 			ctx.reply('Выберите город из списка ниже: ', Markup.keyboard(buttons).resize())
 			
 			this.weather.info=res
-			
+			this.weather.week=''
 			console.log(ctx.message.from.first_name+" получил список городов")
 			
 			this.statScene[ctx.message.from.id]={action:'selectWeather'}
@@ -158,45 +166,99 @@ class myBot
 			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		})
 	}
+	//получение информации погоды на неделю
+	getWeekWeatherInfo(ctx)
+	{
+		var {keyWeather2} = require('./keys.js')
+		let url=encodeURI(`https://api.openweathermap.org/data/2.5/onecall?lat=${this.weather.info.list[this.weather.id].coord.lat}&lon=${this.weather.info.list[this.weather.id].coord.lon}&exclude=current,minutely,hourly,alerts&units=metric&lang=ru&appid=${keyWeather2}`)
+		
+		console.log(ctx.message.from.first_name+" запросил данные о погоде")
+		this.weather.requestData(url).then(
+		res=>{
+		if (res=='not found')
+		{
+			ctx.reply('Город не найден', this.getMainMenu())
+			console.log(ctx.message.from.first_name+" не получил информацию")
+			this.statScene[ctx.message.from.id]={action:'ready'}
+			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		}
+		else
+		{
+			console.log(ctx.message.from.first_name+" получил данные")
+			this.weather.week=res
+		}},
+		rej=>{
+			console.log(rej)
+			ctx.reply('Ошибка: не удалось получить данные', this.getMainMenu())
+			console.log('Не получилось найти URL')
+			this.statScene[ctx.message.from.id]={action:'ready'}
+			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+		})
+	}
+	//метод вызова выбора типа погоды
+	chooseWeather(ctx)
+	{
+		if (this.weather.week=='')
+		{
+			this.getWeekWeatherInfo(ctx)
+		}
+		this.weather.city=`${this.weather.info.list[this.weather.id].name}, ${this.weather.info.list[this.weather.id].sys.country}`
+		const {Markup} = require('telegraf')
+		ctx.reply('Выберите погоду, которую хотите узнать: ', Markup.keyboard([
+			Markup.button.callback('Погода сейчас', 'currentWeather'),
+			Markup.button.callback('Погода на сегодня', 'dayWeather'),
+			Markup.button.callback('Погода на завтра', 'tomorrowWeather'),
+			Markup.button.callback('Погода на неделю', 'weekWeather'),
+			Markup.button.callback('Вернуться назад', 'cancelWeather')]
+		).resize())
+		this.statScene[ctx.message.from.id]={action:'chooseWeather'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+	}
+	//проверка корректности выбора города из списка
+	ifCorrectCity(ctx)
+	{
+		let result=false
+		for (var i=0;i<this.weather.info.count;i++)
+		{
+			if (ctx.message.text==`${i+1}: ${this.weather.info.list[i].name}, ${this.weather.info.list[i].sys.country}`)
+			{
+				this.weather.id=i
+				break;
+			}
+			else
+				this.weather.id=null
+		}
+		if (this.weather.id!=null)
+		{
+			result=true
+		}
+		return result
+	}
 	//отображение сообщения после выбора города
 	printCurrentWeather(ctx)
 	{
-		switch(ctx.message.text)
+		let info=this.weather.getCurrentInformation(this.weather.info)
+		console.log(ctx.message.from.first_name+" узнал погоду сейчас")
+		ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${this.weather.info.list[this.weather.id].coord.lon},${this.weather.info.list[this.weather.id].coord.lat}&size=600,450&z=11&l=map&amp&name=1.png`,
 		{
-			case 'Вернуться назад':
-				ctx.reply('Вы вернулись в главное меню', this.getMainMenu())
-				this.statScene[ctx.message.from.id]={action:'ready'}
-				console.log(ctx.message.from.first_name+" вернулся в главное меню")
-				console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)	
-				break;
-			default:
-				let id=0
-				for (var i=0;i<this.weather.info.count;i++)
-				{
-					if (ctx.message.text==`${i+1}: ${this.weather.info.list[i].name}, ${this.weather.info.list[i].sys.country}`)
-					{
-						id=i
-						break;
-					}
-					else
-						id=null
-				}
-				if (id!=null)
-				{
-					let info=this.weather.getInformation(this.weather.info)
-					ctx.reply(info.someText[id])
-					ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${this.weather.info.list[id].coord.lon},${this.weather.info.list[id].coord.lat}&size=600,450&z=11&l=map&amp&name=1.png`)
-					console.log(ctx.message.from.first_name+" выбрал город")
-					break;
-				}
-				else
-				{
-					ctx.reply('Такого города нет в списке. Выберите город из списка ниже:')
-					console.log(ctx.message.from.first_name+" ввел неверное название города из списка")
-					break;
-				}
-				break;
-		}
+			caption: info.someText[this.weather.id]
+		})
+	}
+	printWeekWeather(ctx)
+	{
+		let info=this.weather.getWeekInformation(this.weather.week)
+		ctx.reply(info.someText)
+		ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${this.weather.info.list[this.weather.id].coord.lon},${this.weather.info.list[this.weather.id].coord.lat}&size=600,450&z=11&l=map&amp&name=1.png`)
+		console.log(ctx.message.from.first_name+" узнал погоду на неделю")
+	}
+	printDayWeather(ctx, id, day)
+	{
+		let info=this.weather.getDayInformation(this.weather.week, id, day)
+		ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${this.weather.info.list[this.weather.id].coord.lon},${this.weather.info.list[this.weather.id].coord.lat}&size=600,450&z=11&l=map&amp&name=1.png`,
+		{
+			caption: info.someText
+		})
+		console.log(ctx.message.from.first_name+" узнал погоду на "+day)
 	}
 	
 	//команда - ответ на любой иной текст, а также обработка события выбора города погоды
@@ -213,16 +275,67 @@ class myBot
 		{
 			//сцена погоды
 			case ('weather'):
-				this.getCurrentWeatherInfo(ctx)
+				switch (ctx.message.text)
+				{
+					case ('Вернуться в главное меню'):
+						this.cancelWeather(ctx)
+						break;
+					default:
+						this.getCurrentWeatherInfo(ctx)
+						break;
+				}
 				break;
 			//сцена выбора города из списка
 			case ('selectWeather'):
-				this.printCurrentWeather(ctx)
+				switch (ctx.message.text)
+				{
+					case ('Вернуться назад'):
+						this.weatherNowBot(ctx)
+						break;
+					default:
+						let search=this.ifCorrectCity(ctx)
+						if (search==true)
+						{
+							console.log(ctx.message.from.first_name+" выбрал город")
+							this.chooseWeather(ctx)
+						}
+						else
+						{
+							ctx.reply('Такого города нет в списке. Выберите город из списка ниже:')
+							console.log(ctx.message.from.first_name+" ввел неверное название города из списка")
+						}
+						break;
+				}
+				break;
+			//сцена выбора типа прогноза 
+			case ('chooseWeather'):
+				switch(ctx.message.text)
+				{
+					case ('Погода сейчас'):
+						this.printCurrentWeather(ctx)
+						break;
+					case ('Погода на сегодня'):
+						this.printDayWeather(ctx, 0, 'сегодня')
+						break;
+					case ('Погода на завтра'):
+						this.printDayWeather(ctx, 1, 'завтра')
+						break;
+					case('Погода на неделю'):
+						this.printWeekWeather(ctx)
+						break;
+					case('Вернуться назад'):
+						this.weatherNowBot(ctx)
+						break;
+					default:
+						ctx.reply('Нет такой команды. Выберите погоду, которую хотите узнать:')
+						break;
+				}
 				break;
 			//любая другая сцена
 			default:
 				ctx.reply('нет такой команды, напишите /help, там рабочие команды!', this.getMainMenu())
 				console.log(ctx.message.from.first_name+" ввел неверную команду")
+				break;
 				//на остальное говорит, что команды не существует
 		}
 	}
@@ -257,7 +370,7 @@ class myBot
 		{
 			this.dudesBot(ctx)
 		})
-		this.bot.hears('Погода сейчас', ctx => 
+		this.bot.hears('Узнать погоду', ctx => 
 		{
 			this.weatherNowBot(ctx)
 		})
