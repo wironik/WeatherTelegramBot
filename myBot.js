@@ -109,7 +109,7 @@ class myBot
 	weatherNowBot(ctx)
 	{
 		const {Markup} = require('telegraf')
-		ctx.reply("Введите Ваш город: ", Markup.keyboard([Markup.button.callback('Москва', 'moscow'),Markup.button.callback('Санкт-Петербург', 'spb'),Markup.button.callback('Вернуться в главное меню', 'cancelMenu')]).resize())
+		ctx.reply("Введите Ваш город: ", Markup.keyboard([Markup.button.callback('Москва', 'moscow'),Markup.button.callback('Санкт-Петербург', 'spb'),Markup.button.callback('Вернуться в главное меню', 'cancelMenu')]).oneTime().resize())
 		this.statScene[ctx.message.from.id]={action:'weather'}
 		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		//перехватываем запрос - мы должны ввести ответ и отправить строку
@@ -140,23 +140,8 @@ class myBot
 		}
 		else
 		{
-			//получаем погоду
-			const {Markup} = require('telegraf')
-			
-			let buttons=[]
-			for (var id=0; id<res.count;id++)
-			{
-				buttons.push(Markup.button.callback(`${id+1}: ${res.list[id].name}, ${res.list[id].sys.country}`, 'weather '+id))
-			}
-			buttons.push(Markup.button.callback('Вернуться назад', 'cancel'))
-			ctx.reply('Выберите город из списка ниже: ', Markup.keyboard(buttons).resize())
-			
-			this.weather.info=res
-			this.weather.week=''
-			console.log(ctx.message.from.first_name+" получил список городов")
-			
-			this.statScene[ctx.message.from.id]={action:'selectWeather'}
-			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
+			//получаем список городов
+			this.selectCityBot(ctx, res)
 		}},
 		rej=>{
 			console.log(rej)
@@ -165,6 +150,26 @@ class myBot
 			this.statScene[ctx.message.from.id]={action:'ready'}
 			console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 		})
+	}
+	selectCityBot(ctx, res)
+	{
+		//получаем список городов
+		const {Markup} = require('telegraf')
+			
+		let buttons=[]
+		for (var id=0; id<res.count;id++)
+		{
+			buttons.push(Markup.button.callback(`${id+1}: ${res.list[id].name}, ${res.list[id].sys.country}`, 'weather '+id))
+		}
+		buttons.push(Markup.button.callback('Вернуться назад', 'cancel'))
+		ctx.reply('Выберите город из списка ниже: ', Markup.keyboard(buttons).oneTime().resize())
+			
+		this.weather.info=res
+		this.weather.week=''
+		console.log(ctx.message.from.first_name+" получил список городов")
+			
+		this.statScene[ctx.message.from.id]={action:'selectWeather'}
+		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
 	//получение информации погоды на неделю
 	getWeekWeatherInfo(ctx)
@@ -210,7 +215,7 @@ class myBot
 			Markup.button.callback('Погода на завтра', 'tomorrowWeather'),
 			Markup.button.callback('Погода на неделю', 'weekWeather'),
 			Markup.button.callback('Вернуться назад', 'cancelWeather')]
-		).resize())
+		).oneTime().resize())
 		this.statScene[ctx.message.from.id]={action:'chooseWeather'}
 		console.log("bot status "+ctx.message.from.id+": "+this.statScene[ctx.message.from.id].action)
 	}
@@ -237,11 +242,11 @@ class myBot
 	//отображение сообщения после выбора города
 	printCurrentWeather(ctx)
 	{
-		let info=this.weather.getCurrentInformation(this.weather.info)
+		let info=this.weather.getCurrentInformation(this.weather.info, this.weather.id)
 		console.log(ctx.message.from.first_name+" узнал погоду сейчас")
 		ctx.replyWithPhoto(`https://static-maps.yandex.ru/1.x/?ll=${this.weather.info.list[this.weather.id].coord.lon},${this.weather.info.list[this.weather.id].coord.lat}&size=600,450&z=11&l=map&amp&name=1.png`,
 		{
-			caption: info.someText[this.weather.id]
+			caption: info.someText
 		})
 	}
 	printWeekWeather(ctx)
@@ -324,7 +329,7 @@ class myBot
 						this.printWeekWeather(ctx)
 						break;
 					case('Вернуться назад'):
-						this.weatherNowBot(ctx)
+						this.selectCityBot(ctx, this.weather.info)
 						break;
 					default:
 						ctx.reply('Нет такой команды. Выберите погоду, которую хотите узнать:')
@@ -441,7 +446,6 @@ class myBot
 	//запуск бота
 	initialize()
 	{
-		//this.getMainMenu()
 		this.addActionsBot()
 		this.addCommandBot()
 		

@@ -40,18 +40,13 @@ class Weather
 		});
 	}
 	//получаем массив текстовых сообщений
-	getCurrentInformation(data)
+	getCurrentInformation(data, id)
 	{
-		let someText=[]
-		
-		for (var id=0;id<data.count;id++)
-		{
-			someText.push(`Погода в городе ${data.list[id].name}, ${data.list[id].sys.country}:
+		let someText=`Погода в городе ${data.list[id].name}, ${data.list[id].sys.country}:
 			- Температура: ${data.list[id].main.temp}°С, ${data.list[id].weather[0].description};
 			- Скорость ветра: ${data.list[id].wind.speed} м/с;
 			- Влажность: ${data.list[id].main.humidity}%;
-			- Давление: ${data.list[id].main.pressure} гПа`)
-		}
+			- Давление: ${data.list[id].main.pressure} гПа`
 		return {someText:someText}
 	}
 	//конвертация времени
